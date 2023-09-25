@@ -19,7 +19,7 @@ layout, sidebar, utils = Layout(), Sidebar(), Utilities()
 
 st.markdown(
     f"""
-    <h1 style='text-align: center;'> Ask Robby to summarize youtube video ! 😁</h1>
+    <h1 style='text-align: center;'> Ask Dobby to summarize youtube video ! 😁</h1>
     """,
     unsafe_allow_html=True,
 )
