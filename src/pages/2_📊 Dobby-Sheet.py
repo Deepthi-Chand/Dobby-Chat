@@ -2,8 +2,9 @@ import os
 import importlib
 import sys
 import pandas as pd
+import requests
 import streamlit as st
-from io import BytesIO
+from io import BytesIO, StringIO
 from modules.robby_sheet.table_tool import PandasAgent
 from modules.layout import Layout
 from modules.utils import Utilities
@@ -40,16 +41,20 @@ else:
     st.session_state.setdefault("reset_chat", False)
 
     uploaded_file = utils.handle_upload(["csv", "xlsx"])
-
-    if uploaded_file:
+    link = utils.handle_file_link(["csv"])
+    if uploaded_file or link:
         sidebar.about()
-        
-        uploaded_file_content = BytesIO(uploaded_file.getvalue())
-        if uploaded_file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" or uploaded_file.type == "application/vnd.ms-excel":
-            df = pd.read_excel(uploaded_file_content)
-        else:
-            df = pd.read_csv(uploaded_file_content)
-
+        if uploaded_file:
+            uploaded_file_content = BytesIO(uploaded_file.getvalue())
+            if uploaded_file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" or uploaded_file.type == "application/vnd.ms-excel":
+                df = pd.read_excel(uploaded_file_content)
+            else:
+                df = pd.read_csv(uploaded_file_content)
+        if link:
+            api_response = requests.get(link)
+            csv_data = StringIO(api_response.text)
+            df = pd.read_csv(csv_data, sep=",", keep_default_na=True, na_values=['...'])
+            df.columns = df.columns.str.replace(" ", "_")
         st.session_state.df = df
 
         if "chat_history" not in st.session_state:

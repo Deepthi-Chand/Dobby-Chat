@@ -1,7 +1,10 @@
 import os
+from io import StringIO
+
 import pandas as pd
 import streamlit as st
 import pdfplumber
+import requests
 
 from modules.chatbot import Chatbot
 from modules.embedder import Embedder
@@ -33,7 +36,7 @@ class Utilities:
 
         return user_api_key
 
-    
+
     @staticmethod
     def handle_upload(file_types):
         """
@@ -56,24 +59,24 @@ class Utilities:
                     for page in pdf.pages:
                         pdf_text += page.extract_text() + "\n\n"
                 file_container.write(pdf_text)
-            
+
             def show_txt_file(uploaded_file):
                 file_container = st.expander("Your TXT file:")
                 uploaded_file.seek(0)
                 content = uploaded_file.read().decode("utf-8")
                 file_container.write(content)
-            
+
             def get_file_extension(uploaded_file):
                 return os.path.splitext(uploaded_file)[1].lower()
-            
+
             file_extension = get_file_extension(uploaded_file.name)
 
             # Show the contents of the file based on its extension
             #if file_extension == ".csv" :
             #    show_csv_file(uploaded_file)
-            if file_extension== ".pdf" : 
+            if file_extension== ".pdf" :
                 show_pdf_file(uploaded_file)
-            elif file_extension== ".txt" : 
+            elif file_extension== ".txt" :
                 show_txt_file(uploaded_file)
 
         else:
@@ -101,5 +104,41 @@ class Utilities:
 
         return chatbot
 
+    @staticmethod
+    def handle_file_link(file_types):
+        """
+                Handles url link and display linked file
+                :param file_types: List of accepted file types, e.g., ["csv", "pdf", "txt"]
+        """
+        url_link = st.sidebar.text_input(placeholder="Enter valid CSV URL", label_visibility="hidden", label=" ")
+        if is_valid_url(url_link):
+            def show_csv_file(url):
+                file_container = st.expander("Your CSV file :")
+                api_response = requests.get(url)
+                csv_data = StringIO(api_response.text)
+                df = pd.read_csv(csv_data, sep=",", keep_default_na=False)
+                # df = pd.read_csv(url, storage_options={"User-Agent": "Mozilla/5.0"})
+                file_container.write(df)
+            # def get_file_extension(uploaded_file):
+            #     return os.path.splitext(uploaded_file)[1].lower()
 
-    
+            # Show the contents of the url
+            print(url_link)
+            show_csv_file(url_link)
+        else:
+            st.session_state["reset_chat"] = True
+
+        # print(url_link)
+        return url_link
+
+
+def is_valid_url(url):
+    try:
+        response = requests.get(url)
+        print(response)
+        response.raise_for_status()
+        return True
+    except requests.exceptions.HTTPError:
+        return False
+    except requests.exceptions.RequestException:
+        return False

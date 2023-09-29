@@ -3,11 +3,14 @@ import sys
 from io import StringIO, BytesIO
 import matplotlib.pyplot as plt
 import streamlit as st
+from langchain import HuggingFaceHub
 from langchain.callbacks import get_openai_callback
+# from pandasai.llm import Falcon
 from streamlit_chat import message
 
 from pandasai import PandasAI
 from pandasai.llm.openai import OpenAI
+from pandasai.llm.starcoder import Starcoder
 
 class PandasAgent :
 
@@ -27,11 +30,13 @@ class PandasAgent :
 
     def get_agent_response(self, uploaded_file_content, query):
         llm = OpenAI()
+        # llm = HuggingFaceHub(huggingfacehub_api_token="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")
         pandas_ai = PandasAI(llm, verbose=True)
         old_stdout = sys.stdout
         sys.stdout = captured_output = StringIO()
         
         response = pandas_ai.run(data_frame = uploaded_file_content, prompt=query)
+        print(response)
         fig = plt.gcf()
         if fig.get_axes():
                     # Adjust the figure size
